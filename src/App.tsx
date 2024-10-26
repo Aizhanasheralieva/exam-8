@@ -12,7 +12,7 @@ const App = () => (
     <Container maxWidth="lg">
       <Routes>
         <Route path="/quotes" element={<Quotes/>}></Route>
-        <Route path="/submit-new-quote" element={<QuoteForm/>}></Route>
+        <Route path="/new-quote" element={<QuoteForm/>}></Route>
         <Route path="*" element={<Typography variant="h6">Page not found</Typography>}></Route>
       </Routes>
     </Container>
