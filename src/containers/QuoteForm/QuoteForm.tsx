@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import { IQuoteForm } from '../../types';
 import {
   Box,
   Button,
@@ -12,65 +10,86 @@ import {
   Typography
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { Simulate } from 'react-dom/test-utils';
+import axiosAPI from '../../axiosAPI.ts';
+import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { IQuoteForm } from '../../types';
 import axiosApi from '../../axiosAPI.ts';
 
 const initialForm = {
   category: '',
   author: '',
   text: '',
-}
+};
 
-interface Props {
-  quoteForEditing?: IQuoteForm;
-  submitForm: (quote: IQuoteForm) => void;
-}
-const QuoteForm: React.FC<Props> = ({quoteForEditing, submitForm}) => {
-  const [form, setForm] = useState<IQuoteForm>({...initialForm});
+const QuoteForm = () => {
+  const { id } = useParams<{ id: string }>();
+  const [form, setForm] = useState<IQuoteForm>({ ...initialForm });
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (quoteForEditing) {
-      setForm(prevState => ({
-        ...prevState,
-        ...quoteForEditing,
-      }))
-    }
-  }, [quoteForEditing]);
+    const getQuote = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          const response = await axiosAPI.get(`/quotes/${id}.json`);
+          if (response.data) {
+            setForm({ ...response.data });
+          }
+        } catch (error) {
+          console.error('Error fetching quote:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setForm(initialForm);
+      }
+    };
+    void getQuote();
+  }, [id]);
 
   const quoteCategories = [
-    {title: 'Star Wars', id: 'star-wars'},
-    {title: 'Famous people', id: 'famous-people'},
-    {title: 'Saying', id: 'saying'},
-    {title: 'Humour', id: 'humour'},
-    {title: 'Motivational', id: 'motivational'},
-  ]
+    { title: 'Star Wars', id: 'star-wars' },
+    { title: 'Famous people', id: 'famous-people' },
+    { title: 'Saying', id: 'saying' },
+    { title: 'Humour', id: 'humour' },
+    { title: 'Motivational', id: 'motivational' },
+  ];
 
   const onChangeQuoteField = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {name, value} = e.target;
-
-    setForm(prevState => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const onSubmitForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    submitForm({...form});
-    setForm({...initialForm});
+    try {
+      setLoading(true);
+      if (id) {
+        await axiosApi.put(`/quotes/${id}.json`, { ...form });
+      } else {
+        await axiosApi.post(`/quotes.json`, {
+          ...form,
+          date: new Date().toISOString(),
+        });
+      }
+      setForm(initialForm);
+    } catch (error) {
+      console.error('Error saving quote:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={onSubmitForm}>
-      <Typography color="inherit" to="/new-quote" variant="h4" component="div" sx={{flexGrow: 1, textDecoration: "none", mb: 4}}>
-        {quoteForEditing ? 'Edit' : 'Save new'} quote
+      <Typography color="inherit" variant="h4" component="div" sx={{ flexGrow: 1, textDecoration: "none", mb: 4 }}>
+        {id ? 'Edit' : 'Save new'} quote
       </Typography>
       <Box sx={{ maxWidth: 300, mb: 3 }}>
         <FormControl fullWidth>
-          <InputLabel id="demo-simple-select-label">Category</InputLabel>
+          <InputLabel id="category-select-label">Category</InputLabel>
           <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
+            labelId="category-select-label"
             value={form.category}
             label="Category"
             name="category"
@@ -78,16 +97,17 @@ const QuoteForm: React.FC<Props> = ({quoteForEditing, submitForm}) => {
             onChange={onChangeQuoteField}
           >
             {quoteCategories.map((quoteCategory) => (
-              <MenuItem key={quoteCategory.id} value={quoteCategory.id}>{quoteCategory.title}</MenuItem>
+              <MenuItem key={quoteCategory.id} value={quoteCategory.id}>
+                {quoteCategory.title}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
       </Box>
-      <Grid container spacing={2} sx={{ me: "auto", width: "70%"}}>
-        <Grid size={12}>
+      <Grid container spacing={2} sx={{ me: "auto", width: "70%" }}>
+        <Grid item xs={12}>
           <TextField
-            sx={{ width: "100%"}}
-            id="outlined-basic"
+            sx={{ width: "100%" }}
             label="Author"
             name="author"
             variant="outlined"
@@ -96,7 +116,6 @@ const QuoteForm: React.FC<Props> = ({quoteForEditing, submitForm}) => {
             onChange={onChangeQuoteField}
           />
         </Grid>
-
         <Grid item xs={12}>
           <TextareaAutosize
             minRows={7}
@@ -109,8 +128,10 @@ const QuoteForm: React.FC<Props> = ({quoteForEditing, submitForm}) => {
           />
         </Grid>
       </Grid>
-      <Grid size={8}>
-        <Button type="submit" variant="contained">{quoteForEditing ? 'Edit' : 'Save'}</Button>
+      <Grid item xs={12}>
+        <Button type="submit" variant="contained" disabled={loading}>
+          {loading ? 'Saving...' : (id ? 'Edit' : 'Save')}
+        </Button>
       </Grid>
     </form>
   );
