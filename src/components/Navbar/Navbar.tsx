@@ -22,10 +22,10 @@ const Navbar = () => {
             Quotes Central
           </Typography>
           <Typography>
-            <Typography color="inherit" to="/quotes" variant="h7" component={NavLink} sx={{flexGrow: 1, textDecoration: "none", m: 3}}>
+            <Typography color="inherit" to="/" variant="h7" component={NavLink} sx={{flexGrow: 1, textDecoration: "none", m: 3}}>
               Quotes
             </Typography>
-            <Typography color="inherit" to="/new-quote" variant="h7" component={NavLink} sx={{flexGrow: 1, textDecoration: "none"}}>
+            <Typography color="inherit" to="/quotes/new-quote" variant="h7" component={NavLink} sx={{flexGrow: 1, textDecoration: "none"}}>
               Submit new quote
             </Typography>
           </Typography>
